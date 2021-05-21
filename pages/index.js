@@ -34,7 +34,6 @@ export default function Home() {
     }
 
     const { token, region } = await getSpeechToken();
-    console.log({ token, region })
     const speechConfig = SpeechConfig.fromAuthorizationToken(token, region);
     speechConfig.speechRecognitionLanguage = 'es-ES';
     speechConfig.enableDictation();
@@ -46,11 +45,15 @@ export default function Home() {
       fileRecognizerInstance.current.recognizing = (_, event) => {
         setTempDisplayText(event.result.text);
       };
-      fileRecognizerInstance.current.recognized = (_, event) => {
+      fileRecognizerInstance.current.recognized = async (_, event) => {
         const textToAdd = `[${secondsToTime(event.result.privOffset / 10000000)}] - ${event.result.text}\n`
         setDisplayText((prev) => prev + textToAdd);
         console.log(event.result)
         setTempDisplayText('');
+        const { token } = await getSpeechToken();
+        if (fileRecognizerInstance?.current) {
+          fileRecognizerInstance.current.authorizationToken = token;
+        }
       };
       fileRecognizerInstance.current.sessionStopped = () => {
         setIsRecognizingFile(false);
@@ -124,7 +127,7 @@ export default function Home() {
         </div>
 
         <div className="px-4 py-6 sm:px-0">
-          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8 overflow-scroll" style={{whiteSpace: 'pre-wrap'}} >
+          <div className="border-4 border-dashed border-gray-200 rounded-lg h-96 p-8 overflow-scroll" style={{ whiteSpace: 'pre-wrap' }} >
             <p dangerouslySetInnerHTML={{ __html: displayText || 'Ready' }}></p>
             {/* <p>display temp text: {tempDisplayText}</p> */}
           </div>
